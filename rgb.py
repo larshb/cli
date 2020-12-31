@@ -34,18 +34,35 @@ class TerminalImage:
         return f'{NONE}\n'.join(lines) + NONE
 
 
-if __name__ == '__main__':
-    from os.path import abspath, dirname
+def fill_console(image_file):
+    from shutil import get_terminal_size
 
-    HERE = abspath(dirname(__file__))
-    # IMAGE_FILE = f"{HERE}/kiss.jpg"
-    IMAGE_FILE = f"{HERE}/andreas.jpg"
+    width, height = get_terminal_size()
 
-    im = Image.open(IMAGE_FILE)
+    im = Image.open(image_file)
     X, Y = im.size
-    res = 5
-    im = im.resize((X//res, Y//res))
-    X, Y = im.size
+    while X > width:
+        im = im.resize((X // 2, Y // 2))
+        X, Y = im.size
     ti = TerminalImage(im)
     si = str(ti)
     print(si)
+
+
+
+if __name__ == '__main__':
+
+    # from os.path import abspath, dirname
+    # HERE = abspath(dirname(__file__))
+    # IMAGE_FILE = f"{HERE}/kiss.jpg"
+    # # IMAGE_FILE = f"{HERE}/andreas.jpg"
+
+    # fill_console(IMAGE_FILE)
+
+    from pathlib import Path
+
+    root = Path("/")
+    jpegs = root.rglob("*.jpg")
+    for jpeg in jpegs:
+        print(jpeg)
+        fill_console(jpeg)
