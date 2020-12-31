@@ -3,8 +3,6 @@
 from ansi import \
     say, sgr, SGR_INCREASE, SGR_FG_GREEN, SGR_FG_RED, NONE, show_cursor
 from time import sleep
-from random import choice
-
 
 SOL = '\b' * 1000  # Start Of Line (TODO: Handle multiline flushes)
 
@@ -85,6 +83,7 @@ class Demo:
         exit(0)
 
     def demo(self):
+        from random import choice
         from loading import messages
         try:
             show_cursor(False)
