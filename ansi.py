@@ -84,6 +84,19 @@ def c3b_index(color, background=False):
 def c3b(color, background=False):
     return sgr(c3b_index(color, background=background))
 
+# --- 24-bit colors -----------------------------------------------------------
+def __c24_postfix(r, g, b):
+    return f"2;{r};{g};{b}"
+
+def sgr_c24_fg(r, g, b):
+    return f"38;{__c24_postfix(r, g, b)}"
+
+def sgr_c24_bg(r, g, b):
+    return f"48;{__c24_postfix(r, g, b)}"
+
+def c24(r, g, b, background=False):
+    return sgr(48 if background else 38, 2, r, g, b)
+
 # --- Constants ---------------------------------------------------------------
 
 # Named Numeric Constants for optional SGR-combinations (a;b;c;...;n)
