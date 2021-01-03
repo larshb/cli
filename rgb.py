@@ -4,21 +4,17 @@
 from ansi import say, sgr, c24, NONE, sgr_c24_fg, sgr_c24_bg
 
 
+ENABLE_TRANSPARENCY = False
+
+
 class DoubleBlock:
 
     def __init__(self, top : tuple, bottom : tuple):
-        self.top = map(int, top)
-        self.bottom = map(int, bottom)
+        self.top = top
+        self.bottom = bottom
 
-    def __str__(self, debug=True):
-        #if type(self.top) == int:
-        #    return sgr(sgr_c24_fg(self.top, self.top, self.top) + ';' + sgr_c24_bg(self.bottom, self.bottom, self.bottom)) + '▀'
-        tr, tg, tb = self.top
-        br, bg, bb = self.bottom
-
-        #symbol = f"{r:02x}" if debug else '▀'
-        symbol = '▀'
-        return sgr(sgr_c24_fg(tr, tg, tb) + ';' + sgr_c24_bg(br, bg, bb)) + symbol
+    def __str__(self):
+        return sgr(sgr_c24_fg(*self.top) + ';' + sgr_c24_bg(*self.bottom)) + '▀'
 
 
 class list2d(list):
@@ -36,79 +32,62 @@ class TerminalImage:
     def load(self, lst):
         self.sz = (len(lst[0]), len(lst))
         self.px = list2d(lst)
-        #self.size 
+        # if enable_trasnparency: # Does not work for some reason
+        #     self.__str__ = self.__str__with_alpha
         return self
 
-    def load_pil(self, image):
+    def load_pil(self, image, key=None):
         self.im = image
         self.sz = self.im.size
         self.px = self.im.load()
+        self.key = key
         return self
 
     def __str__(self):
         X, Y = self.sz
         lines = []
         for y2 in range(Y//2):
-            lines.append(
-                ''.join(
-                    str(DoubleBlock(
-                        self.px[x, 2*y2],
-                        self.px[x, 2*y2+1]))
-                    for x in range(X)
-                )
-            )
+            lines.append(''.join(
+                str(DoubleBlock(self.px[x, 2*y2], self.px[x, 2*y2+1]))
+                for x in range(X)))
         return f'{NONE}\n'.join(lines) + NONE
 
 
-def fill_console(image):
-    from shutil import get_terminal_size
-    from logging import info
-    width, height = get_terminal_size()
-    info(f"Terminal size: {(width, height)}")
-
-    if type(image) == str:
-        from PIL import Image
-        im = Image.open(image)
-        X, Y = im.size
-        while X > width:
-            im = im.resize((X // 2, Y // 2))
-            X, Y = im.size
-        ti = TerminalImage().load_pil(im)
-    elif type(image) == list:
-        ti = TerminalImage().load(image)
-
-    si = str(ti)
-    print(si)
+def __TerminalImage_str_alpha(self):
+    X, Y = self.sz
+    lines = []
+    for y2 in range(Y//2):
+        line = ''
+        for x in range(X):
+            pxs = self.px[x, 2*y2], self.px[x, 2*y2+1]
+            if self.key:
+                pxs = map(lambda c: None if c == self.key else c, pxs)
+            line += str(DoubleBlock(*pxs))
+        lines.append(line)
+    return f'{NONE}\n'.join(lines) + NONE
 
 
+def __DoubleBlock_str_alpha(self, debug=True):
 
-if __name__ == '__main__':
+    sgr_string = '0'
+    if self.top:
+        symbol = '▀'
+        sgr_string += ';' + sgr_c24_fg(*self.top)
+        if self.bottom:
+            sgr_string += ';' + sgr_c24_bg(*self.bottom)
+    elif self.bottom:
+        symbol = '▄'
+        sgr_string += ';' + sgr_c24_fg(*self.bottom)
+    else:
+        symbol = ' '
+    return sgr(sgr_string) + symbol
 
-    from os.path import abspath, dirname
-    HERE = abspath(dirname(__file__))
-    # IMAGE_FILE = f"{HERE}/kiss.jpg"
-    IMAGE_FILE = f"{HERE}/andreas.jpg"
-    # IMAGE_FILE = f"{HERE}/mario.png"
 
-    from ansi import cup
-    say(cup(10, 1)) # Row, column
+if ENABLE_TRANSPARENCY:
+    TerminalImage.__str__ = __TerminalImage_str_alpha
+    DoubleBlock.__str__ = __DoubleBlock_str_alpha
 
-    fill_console(IMAGE_FILE)
 
-    # from pathlib import Path
 
-    # root = Path("/")
-    # jpegs = root.rglob("*.jpg")
-    # for jpeg in jpegs:
-    #     print(jpeg)
-    #     fill_console(jpeg)
 
-    # L = [
-    #     [(255, 0, 0), (0, 0, 0), (100, 100, 100)],
-    #     [(255, 0, 0), (0, 0, 0), (100, 100, 100)],
-    #     [(255, 0, 0), (0, 0, 0), (100, 100, 100)],
-    #     [(255, 0, 0), (0, 0, 0), (100, 100, 100)],
-    #     [(255, 0, 0), (0, 0, 0), (0, 0, 0)],
-    #     [(255, 0, 0), (255, 0, 0), (255, 0, 0)]
-    # ]
-    # fill_console(L)
+
